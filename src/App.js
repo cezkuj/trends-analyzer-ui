@@ -14,18 +14,21 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.setSeries = this.setSeries.bind(this);
-    this.getSeries = this.getSeries.bind(this);
     this.setTags = this.setTags.bind(this);
     this.options = this.options.bind(this);
+    this.handleChange = this.handleChange.bind(this);
     this.state = {
       series: this.getSeries([[new Date().valueOf(), 0]]),
-      tags: []
+      tags: [],
+      chosen: "trump"
     };
   }
+
   componentDidMount() {
-    this.setSeries();
+    this.setSeries(this.state.chosen);
     this.setTags();
   }
+
   getSeries(points) {
     var data = {
       name: "sentiment",
@@ -36,9 +39,9 @@ class App extends Component {
     return series;
   }
 
-  setSeries() {
+  setSeries(tag) {
     axios
-      .get("/api/analyzes?name=trump")
+      .get("/api/analyzes?name=" + tag)
       .then(res => {
         var points = res.data.map(point => [
           new Date(point.timestamp).valueOf(),
@@ -50,6 +53,7 @@ class App extends Component {
         console.log(error);
       });
   }
+
   setTags() {
     axios
       .get("/api/tags")
@@ -61,16 +65,30 @@ class App extends Component {
         console.log(error);
       });
   }
-  options() {
-    return this.state.tags.map(tag => <option value={tag}>{tag}</option>);
+
+  handleChange(event) {
+    var tag = event.target.value;
+    this.setState({ chosen: tag });
+    this.setSeries(tag);
   }
+
+  options() {
+    return this.state.tags.map(tag => (
+      <option key={tag} value={tag}>
+        {tag}
+      </option>
+    ));
+  }
+
   render() {
     return (
       <div>
-        <select>{this.options()}</select>
+        <select value={this.state.chosen} onChange={this.handleChange}>
+          {this.options()}
+        </select>
         <ChartContainer timeRange={this.state.series.timerange()}>
           <ChartRow>
-            <YAxis id="axis1" label="trump" min={-0.3} max={0.3} />
+            <YAxis id="axis1" label={this.state.chosen} min={-0.5} max={0.5} />
             <Charts>
               <LineChart
                 axis="axis1"
