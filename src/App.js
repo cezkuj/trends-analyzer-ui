@@ -73,6 +73,7 @@ class App extends Component {
     this.setState({ chosenTag: tag });
     this.setSeries(tag, this.state.chosenDataFeed);
   }
+
   dataFeedHandleChange(event) {
     var feed = event.target.value;
     this.setState({ chosenDataFeed: feed });
@@ -103,7 +104,12 @@ class App extends Component {
         </select>
         <ChartContainer timeRange={this.state.series.timerange()}>
           <ChartRow>
-            <YAxis id="axis1" label={this.state.chosen} min={-1} max={1} />
+            <YAxis
+              id="axis1"
+              label={this.state.chosen}
+              min={this.state.series.min()}
+              max={this.state.series.max()}
+            />
             <Charts>
               <LineChart
                 axis="axis1"
