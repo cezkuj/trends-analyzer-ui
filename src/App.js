@@ -21,13 +21,19 @@ class App extends Component {
     this.state = {
       series: this.getSeries([[new Date().valueOf(), 0]]),
       keywords: [],
+      countries: ["any"],
       chosenKeyword: "trump",
-      chosenDataFeed: "avg"
+      chosenDataFeed: "avg",
+      chosenCountry: "any"
     };
   }
 
   componentDidMount() {
-    this.setSeries(this.state.chosenKeyword, this.state.chosenDataFeed);
+    this.setSeries(
+      this.state.chosenKeyword,
+      this.state.chosenDataFeed,
+      this.state.chosenCountry
+    );
     this.setKeywords();
   }
 
@@ -41,15 +47,26 @@ class App extends Component {
     return series;
   }
 
-  setSeries(keyword, dataFeed) {
+  setSeries(keyword, dataFeed, country) {
     axios
-      .get("/api/analyzes?name=" + keyword)
+      .get("/api/analyzes/" + keyword + "?country=" + country)
       .then(res => {
         var points = res.data.map(point => [
           new Date(point.timestamp).valueOf(),
           point["reaction_" + dataFeed]
         ]);
         this.setState({ series: this.getSeries(points) });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+
+  setCountries(keyword) {
+    axios
+      .get("/api/countries/" + keyword)
+      .then(res => {
+        this.setState({ countries: res.data });
       })
       .catch(error => {
         console.log(error);
@@ -71,19 +88,42 @@ class App extends Component {
   keywordHandleChange(event) {
     var keyword = event.target.value;
     this.setState({ chosenKeyword: keyword });
-    this.setSeries(keyword, this.state.chosenDataFeed);
+    this.setCountries(keyword);
+    this.setSeries(
+      keyword,
+      this.state.chosenDataFeed,
+      this.state.chosenCountry
+    );
   }
 
   dataFeedHandleChange(event) {
     var feed = event.target.value;
     this.setState({ chosenDataFeed: feed });
-    this.setSeries(this.state.chosenKeyword, feed);
+    this.setSeries(this.state.chosenKeyword, feed, this.state.chosenCountry);
+  }
+
+  countryHandleChange(event) {
+    var country = event.target.value;
+    this.setState({ chosenCountry: country });
+    this.setSeries(
+      this.state.chosenKeyword,
+      this.state.chosenDataFeed,
+      country
+    );
   }
 
   keywordOptions() {
     return this.state.keywords.map(keyword => (
       <option key={keyword} value={keyword}>
         {keyword}
+      </option>
+    ));
+  }
+
+  countryOptions() {
+    return this.state.countries.map(country => (
+      <option key={country} value={country}>
+        {country}
       </option>
     ));
   }
@@ -104,6 +144,12 @@ class App extends Component {
           <option value="avg">avg</option>
           <option value="news">news</option>
           <option value="tweets">tweets</option>
+        </select>
+        <select
+          value={this.state.chosenCountry}
+          onChange={this.countryHandleChange}
+        >
+          {this.countryOptions()}
         </select>
         <ChartContainer timeRange={this.state.series.timerange()}>
           <ChartRow>
