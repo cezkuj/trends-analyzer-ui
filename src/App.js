@@ -14,21 +14,21 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.setSeries = this.setSeries.bind(this);
-    this.setTags = this.setTags.bind(this);
-    this.tagOptions = this.tagOptions.bind(this);
-    this.tagHandleChange = this.tagHandleChange.bind(this);
+    this.setKeywords = this.setKeywords.bind(this);
+    this.keywordOptions = this.keywordOptions.bind(this);
+    this.keywordHandleChange = this.keywordHandleChange.bind(this);
     this.dataFeedHandleChange = this.dataFeedHandleChange.bind(this);
     this.state = {
       series: this.getSeries([[new Date().valueOf(), 0]]),
-      tags: [],
-      chosenTag: "trump",
+      keywords: [],
+      chosenKeyword: "trump",
       chosenDataFeed: "avg"
     };
   }
 
   componentDidMount() {
-    this.setSeries(this.state.chosenTag, this.state.chosenDataFeed);
-    this.setTags();
+    this.setSeries(this.state.chosenKeyword, this.state.chosenDataFeed);
+    this.setKeywords();
   }
 
   getSeries(points) {
@@ -41,9 +41,9 @@ class App extends Component {
     return series;
   }
 
-  setSeries(tag, dataFeed) {
+  setSeries(keyword, dataFeed) {
     axios
-      .get("/api/analyzes?name=" + tag)
+      .get("/api/analyzes?name=" + keyword)
       .then(res => {
         var points = res.data.map(point => [
           new Date(point.timestamp).valueOf(),
@@ -56,34 +56,34 @@ class App extends Component {
       });
   }
 
-  setTags() {
+  setKeywords() {
     axios
-      .get("/api/tags")
+      .get("/api/keywords")
       .then(res => {
-        var tags = res.data.map(tag => tag.name);
-        this.setState({ tags: tags });
+        var keywords = res.data.map(keyword => keyword.name);
+        this.setState({ keywords: keywords });
       })
       .catch(error => {
         console.log(error);
       });
   }
 
-  tagHandleChange(event) {
-    var tag = event.target.value;
-    this.setState({ chosenTag: tag });
-    this.setSeries(tag, this.state.chosenDataFeed);
+  keywordHandleChange(event) {
+    var keyword = event.target.value;
+    this.setState({ chosenKeyword: keyword });
+    this.setSeries(keyword, this.state.chosenDataFeed);
   }
 
   dataFeedHandleChange(event) {
     var feed = event.target.value;
     this.setState({ chosenDataFeed: feed });
-    this.setSeries(this.state.chosenTag, feed);
+    this.setSeries(this.state.chosenKeyword, feed);
   }
 
-  tagOptions() {
-    return this.state.tags.map(tag => (
-      <option key={tag} value={tag}>
-        {tag}
+  keywordOptions() {
+    return this.state.keywords.map(keyword => (
+      <option key={keyword} value={keyword}>
+        {keyword}
       </option>
     ));
   }
@@ -91,8 +91,11 @@ class App extends Component {
   render() {
     return (
       <div>
-        <select value={this.state.chosenTag} onChange={this.tagHandleChange}>
-          {this.tagOptions()}
+        <select
+          value={this.state.chosenKeyword}
+          onChange={this.keywordHandleChange}
+        >
+          {this.keywordOptions()}
         </select>
         <select
           value={this.state.chosenDataFeed}
