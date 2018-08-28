@@ -15,9 +15,12 @@ class App extends Component {
     super(props);
     this.setSeries = this.setSeries.bind(this);
     this.setKeywords = this.setKeywords.bind(this);
+    this.setCountries = this.setCountries.bind(this);
     this.keywordOptions = this.keywordOptions.bind(this);
+    this.countryOptions = this.countryOptions.bind(this);
     this.keywordHandleChange = this.keywordHandleChange.bind(this);
     this.dataFeedHandleChange = this.dataFeedHandleChange.bind(this);
+    this.countryHandleChange = this.countryHandleChange.bind(this);
     this.state = {
       series: this.getSeries([[new Date().valueOf(), 0]]),
       keywords: [],
@@ -35,6 +38,7 @@ class App extends Component {
       this.state.chosenCountry
     );
     this.setKeywords();
+    this.setCountries(this.state.chosenKeyword);
   }
 
   getSeries(points) {
