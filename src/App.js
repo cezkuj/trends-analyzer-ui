@@ -155,7 +155,10 @@ class App extends Component {
         >
           {this.countryOptions()}
         </select>
-        <ChartContainer timeRange={this.state.series.timerange()}>
+        <ChartContainer
+          timeRange={this.state.series.timerange()}
+          enablePanZoom={true}
+        >
           <ChartRow>
             <YAxis
               id="axis1"
