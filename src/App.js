@@ -225,6 +225,7 @@ class App extends Component {
               label="sentiment"
               min={this.state.series.min()}
               max={this.state.series.max()}
+              format=".3f"
             />
             <Charts>
               <LineChart
@@ -262,6 +263,7 @@ class App extends Component {
               label="currencyRate"
               min={this.state.rates.min()}
               max={this.state.rates.max()}
+              format=".3f"
             />
             <Charts>
               <LineChart
