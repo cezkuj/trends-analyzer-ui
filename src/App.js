@@ -16,18 +16,24 @@ class App extends Component {
     this.setSeries = this.setSeries.bind(this);
     this.setKeywords = this.setKeywords.bind(this);
     this.setCountries = this.setCountries.bind(this);
+    this.setRates = this.setRates.bind(this);
     this.keywordOptions = this.keywordOptions.bind(this);
     this.countryOptions = this.countryOptions.bind(this);
     this.keywordHandleChange = this.keywordHandleChange.bind(this);
     this.dataFeedHandleChange = this.dataFeedHandleChange.bind(this);
     this.countryHandleChange = this.countryHandleChange.bind(this);
+    this.baseCurHandleChange = this.baseCurHandleChange.bind(this);
+    this.currencyHandleChange = this.currencyHandleChange.bind(this);
     this.state = {
-      series: this.getSeries([[new Date().valueOf(), 0]]),
+      series: this.getSeries([[new Date().valueOf(), 0]], "sentiment"),
+      rates: this.getSeries([[new Date().valueOf(), 0]], "rates"),
       keywords: [],
       countries: ["any"],
       chosenKeyword: "trump",
       chosenDataFeed: "avg",
-      chosenCountry: "any"
+      chosenCountry: "any",
+      chosenCurrency: "EUR",
+      chosenBaseCur: "USD"
     };
   }
 
@@ -41,9 +47,9 @@ class App extends Component {
     this.setCountries(this.state.chosenKeyword);
   }
 
-  getSeries(points) {
+  getSeries(points, name) {
     var data = {
-      name: "sentiment",
+      name: name,
       columns: ["time", "value"],
       points: points
     };
@@ -59,7 +65,13 @@ class App extends Component {
           new Date(point.timestamp).valueOf(),
           point["reaction_" + dataFeed]
         ]);
-        this.setState({ series: this.getSeries(points) });
+        this.setState({ series: this.getSeries(points, "sentiment") });
+        this.setRates(
+          this.state.chosenBaseCur,
+          this.state.chosenCurrency,
+          this.state.series.begin(),
+          this.state.series.end()
+        );
       })
       .catch(error => {
         console.log(error);
@@ -87,6 +99,54 @@ class App extends Component {
       .catch(error => {
         console.log(error);
       });
+  }
+
+  setRates(baseCur, cur, startDate, endDate) {
+    axios
+      .get(
+        "/api/rates/" +
+          baseCur +
+          "/" +
+          cur +
+          "?startDate=" +
+          Date.parse(startDate) +
+          "&endDate=" +
+          Date.parse(endDate)
+      )
+      .then(res => {
+        var rates = res.data.rates.map(rate => [
+          new Date(rate.date).valueOf(),
+          rate.val
+        ]);
+        //Overwrite first and last entry for better charts
+        rates[0][0] = startDate;
+        rates[rates.length - 1][0] = endDate;
+        this.setState({ rates: this.getSeries(rates, "rates") });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+  baseCurHandleChange(event) {
+    var baseCur = event.target.value;
+    this.setState({ chosenBaseCur: baseCur });
+    this.setRates(
+      baseCur,
+      this.state.chosenCurrency,
+      this.state.series.begin(),
+      this.state.series.end()
+    );
+  }
+
+  currencyHandleChange(event) {
+    var currency = event.target.value;
+    this.setState({ chosenCurrency: currency });
+    this.setRates(
+      this.state.chosenBaseCur,
+      currency,
+      this.state.series.begin(),
+      this.state.series.end()
+    );
   }
 
   keywordHandleChange(event) {
@@ -162,7 +222,7 @@ class App extends Component {
           <ChartRow>
             <YAxis
               id="axis1"
-              label={this.state.chosen}
+              label="sentiment"
               min={this.state.series.min()}
               max={this.state.series.max()}
             />
@@ -170,7 +230,46 @@ class App extends Component {
               <LineChart
                 axis="axis1"
                 series={this.state.series}
-                column={["trump"]}
+                column={[this.state.chosenKeyword]}
+              />
+            </Charts>
+          </ChartRow>
+        </ChartContainer>
+        <select
+          value={this.state.chosenBaseCur}
+          onChange={this.baseCurHandleChange}
+        >
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+          <option value="PLN">PLN</option>
+        </select>
+        <select
+          value={this.state.chosenCurrency}
+          onChange={this.currencyHandleChange}
+        >
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+        </select>
+        <ChartContainer
+          timeRange={this.state.rates.timerange()}
+          enablePanZoom={true}
+        >
+          <ChartRow>
+            <YAxis
+              id="axis2"
+              label="currencyRate"
+              min={this.state.rates.min()}
+              max={this.state.rates.max()}
+            />
+            <Charts>
+              <LineChart
+                axis="axis2"
+                series={this.state.rates}
+                column={[
+                  this.state.chosenCurrency + "/" + this.state.chosenBaseCur
+                ]}
               />
             </Charts>
           </ChartRow>
