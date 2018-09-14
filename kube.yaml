@@ -1,0 +1,29 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: trends-analyzer-ui
+  namespace: trends-analyzer
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: trends-analyzer-ui
+    spec:
+      containers:
+        - name: ui
+          image: cezkuj/trends-analyzer-ui:0.0.1-CLOUD
+          ports:
+            - containerPort: 80
+              name: http-ui
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trends-analyzer-ui
+  namespace: trends-analyzer
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: trends-analyzer-ui
