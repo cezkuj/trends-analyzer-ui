@@ -24,16 +24,19 @@ class App extends Component {
     this.countryHandleChange = this.countryHandleChange.bind(this);
     this.baseCurHandleChange = this.baseCurHandleChange.bind(this);
     this.currencyHandleChange = this.currencyHandleChange.bind(this);
+    this.stocksHandleChange = this.stocksHandleChange.bind(this);
     this.state = {
       series: this.getSeries([[new Date().valueOf(), 0]], "sentiment"),
       rates: this.getSeries([[new Date().valueOf(), 0]], "rates"),
+      stocks: this.getSeries([[new Date().valueOf(), 0]], "stocks"),
       keywords: [],
       countries: ["any"],
       chosenKeyword: "trump",
       chosenDataFeed: "avg",
       chosenCountry: "any",
       chosenCurrency: "EUR",
-      chosenBaseCur: "USD"
+      chosenBaseCur: "USD",
+      chosenStock: "GE"
     };
   }
 
@@ -69,6 +72,11 @@ class App extends Component {
         this.setRates(
           this.state.chosenBaseCur,
           this.state.chosenCurrency,
+          this.state.series.begin(),
+          this.state.series.end()
+        );
+        this.setStocks(
+          this.state.chosenStock,
           this.state.series.begin(),
           this.state.series.end()
         );
@@ -127,6 +135,31 @@ class App extends Component {
         console.log(error);
       });
   }
+
+  setStocks(symbol, startDate, endDate) {
+    axios
+      .get(
+        "/api/stocks/" +
+          symbol +
+          "?startDate=" +
+          Date.parse(startDate) +
+          "&endDate=" +
+          Date.parse(endDate)
+      )
+      .then(res => {
+        var stocks = res.data.map(stock => [
+          new Date(stock.time).valueOf(),
+          stock.price
+        ]);
+        //Overwrite first and last entry for better chart
+        stocks[0][0] = startDate;
+        stocks[stocks.length - 1][0] = endDate;
+        this.setState({ stocks: this.getSeries(stocks, "stocks") });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
   baseCurHandleChange(event) {
     var baseCur = event.target.value;
     this.setState({ chosenBaseCur: baseCur });
@@ -174,6 +207,12 @@ class App extends Component {
       this.state.chosenDataFeed,
       country
     );
+  }
+
+  stocksHandleChange(event) {
+    var symbol = event.target.value;
+    this.setState({ chosenStock: symbol });
+    this.setStocks(symbol, this.state.series.begin(), this.state.series.end());
   }
 
   keywordOptions() {
@@ -272,6 +311,44 @@ class App extends Component {
                 column={[
                   this.state.chosenCurrency + "/" + this.state.chosenBaseCur
                 ]}
+              />
+            </Charts>
+          </ChartRow>
+        </ChartContainer>
+        <select
+          value={this.state.chosenStock}
+          onChange={this.stocksHandleChange}
+        >
+          <option value="GE">GE</option>
+          <option value="BAC">BAC</option>
+          <option value="F">F</option>
+          <option value="NIO">NIO</option>
+          <option value="ELAN">ELAN</option>
+          <option value="CHK">CHK</option>
+          <option value="SNAP">SNAP</option>
+          <option value="ORCL">ORCL</option>
+          <option value="T">T</option>
+          <option value="C">C</option>
+          <option value="MSFT">MSFT</option>
+          <option value="GOOG">GOOG</option>
+        </select>
+        <ChartContainer
+          timeRange={this.state.rates.timerange()}
+          enablePanZoom={true}
+        >
+          <ChartRow>
+            <YAxis
+              id="axis3"
+              label="stocks"
+              min={this.state.stocks.min()}
+              max={this.state.stocks.max()}
+              format=".3f"
+            />
+            <Charts>
+              <LineChart
+                axis="axis3"
+                series={this.state.stocks}
+                column={[this.state.chosenStock]}
               />
             </Charts>
           </ChartRow>
