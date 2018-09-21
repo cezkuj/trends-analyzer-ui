@@ -25,10 +25,13 @@ class App extends Component {
     this.baseCurHandleChange = this.baseCurHandleChange.bind(this);
     this.currencyHandleChange = this.currencyHandleChange.bind(this);
     this.stocksHandleChange = this.stocksHandleChange.bind(this);
+    this.cryptoHandleChange = this.cryptoHandleChange.bind(this);
+    this.cryptoBaseCurHandleChange = this.cryptoBaseCurHandleChange.bind(this);
     this.state = {
       series: this.getSeries([[new Date().valueOf(), 0]], "sentiment"),
       rates: this.getSeries([[new Date().valueOf(), 0]], "rates"),
       stocks: this.getSeries([[new Date().valueOf(), 0]], "stocks"),
+      cryptos: this.getSeries([[new Date().valueOf(), 0]], "cryptos"),
       keywords: [],
       countries: ["any"],
       chosenKeyword: "trump",
@@ -36,7 +39,9 @@ class App extends Component {
       chosenCountry: "any",
       chosenCurrency: "EUR",
       chosenBaseCur: "USD",
-      chosenStock: "GE"
+      chosenStock: "GE",
+      chosenCrypto: "BTC",
+      chosenCryptoBaseCur: "USD"
     };
   }
 
@@ -77,6 +82,12 @@ class App extends Component {
         );
         this.setStocks(
           this.state.chosenStock,
+          this.state.series.begin(),
+          this.state.series.end()
+        );
+        this.setCryptos(
+          this.state.chosenCrypto,
+          this.state.chosenCryptoBaseCur,
           this.state.series.begin(),
           this.state.series.end()
         );
@@ -160,6 +171,40 @@ class App extends Component {
         console.log(error);
       });
   }
+  setCryptos(crypto, base, startDate, endDate) {
+    console.log(
+      "/api/crypto/" +
+        crypto +
+        "/" +
+        base +
+        "?startDate=" +
+        Date.parse(startDate) +
+        "&endDate=" +
+        Date.parse(endDate)
+    );
+    axios
+      .get(
+        "/api/crypto/" +
+          crypto +
+          "/" +
+          base +
+          "?startDate=" +
+          Date.parse(startDate) +
+          "&endDate=" +
+          Date.parse(endDate)
+      )
+      .then(res => {
+        var cryptos = res.data.map(c => [new Date(c.time).valueOf(), c.price]);
+        //Overwrite first and last entry for better chart
+        cryptos[0][0] = startDate;
+        cryptos[cryptos.length - 1][0] = endDate;
+        this.setState({ cryptos: this.getSeries(cryptos, "cryptos") });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+
   baseCurHandleChange(event) {
     var baseCur = event.target.value;
     this.setState({ chosenBaseCur: baseCur });
@@ -213,6 +258,28 @@ class App extends Component {
     var symbol = event.target.value;
     this.setState({ chosenStock: symbol });
     this.setStocks(symbol, this.state.series.begin(), this.state.series.end());
+  }
+
+  cryptoBaseCurHandleChange(event) {
+    var baseCur = event.target.value;
+    this.setState({ chosenCryptoBaseCur: baseCur });
+    this.setCryptos(
+      this.state.chosenCrypto,
+      baseCur,
+      this.state.series.begin(),
+      this.state.series.end()
+    );
+  }
+
+  cryptoHandleChange(event) {
+    var crypto = event.target.value;
+    this.setState({ chosenCrypto: crypto });
+    this.setCryptos(
+      crypto,
+      this.state.chosenCryptoBaseCur,
+      this.state.series.begin(),
+      this.state.series.end()
+    );
   }
 
   keywordOptions() {
@@ -275,6 +342,7 @@ class App extends Component {
             </Charts>
           </ChartRow>
         </ChartContainer>
+
         <select
           value={this.state.chosenBaseCur}
           onChange={this.baseCurHandleChange}
@@ -299,7 +367,7 @@ class App extends Component {
           <ChartRow>
             <YAxis
               id="axis2"
-              label="currencyRate"
+              label="Currency rate"
               min={this.state.rates.min()}
               max={this.state.rates.max()}
               format=".3f"
@@ -315,6 +383,7 @@ class App extends Component {
             </Charts>
           </ChartRow>
         </ChartContainer>
+
         <select
           value={this.state.chosenStock}
           onChange={this.stocksHandleChange}
@@ -349,6 +418,48 @@ class App extends Component {
                 axis="axis3"
                 series={this.state.stocks}
                 column={[this.state.chosenStock]}
+              />
+            </Charts>
+          </ChartRow>
+        </ChartContainer>
+
+        <select
+          value={this.state.chosenCrypto}
+          onChange={this.cryptoHandleChange}
+        >
+          <option value="BTC">BTC</option>
+          <option value="BCH">BCH</option>
+          <option value="LCC">LCC</option>
+          <option value="DOGE">DOGE</option>
+          <option value="ETH">ETH</option>
+        </select>
+        <select
+          value={this.state.chosenCryptoBaseCur}
+          onChange={this.cryptoBaseCurHandleChange}
+        >
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+        </select>
+        <ChartContainer
+          timeRange={this.state.cryptos.timerange()}
+          enablePanZoom={true}
+        >
+          <ChartRow>
+            <YAxis
+              id="axis4"
+              label="Cryptocurrency rate"
+              min={this.state.cryptos.min()}
+              max={this.state.cryptos.max()}
+              format=".3f"
+            />
+            <Charts>
+              <LineChart
+                axis="axis4"
+                series={this.state.cryptos}
+                column={[
+                  this.state.chosenCrypto + "/" + this.state.chosenCryptoBaseCur
+                ]}
               />
             </Charts>
           </ChartRow>
