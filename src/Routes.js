@@ -10,12 +10,13 @@ import {
 import App from "./App";
 import Login from "./Login";
 import Register from "./Register";
+import Auth from "./Authenticator";
 
 const PrivateRoute = ({ component: Component, ...rest }) => (
   <Route
     {...rest}
     render={props =>
-      true ? (
+      Auth.authenticate() ? (
         <Component {...props} />
       ) : (
         <Redirect
@@ -45,7 +46,7 @@ class Routes extends React.Component {
 }
 class Menu extends React.Component {
   render() {
-    if (false) {
+    if (Auth.authenticate()) {
       return <Redirect to="/dashboard" />;
     }
     return (
