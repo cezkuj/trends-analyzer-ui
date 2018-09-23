@@ -3,8 +3,7 @@ import {
   BrowserRouter as Router,
   Route,
   Link,
-  Redirect,
-  withRouter
+  Redirect
 } from "react-router-dom";
 
 import axios from "axios";
@@ -13,11 +12,11 @@ import App from "./App";
 import Login from "./Login";
 import Register from "./Register";
 
-const PrivateRoute = ({ component: Component, ...rest }) => (
+const PrivateRoute = ({ component: Component, authenticated, ...rest }) => (
   <Route
     {...rest}
     render={props =>
-      true ? (
+      authenticated ? (
         <Component {...props} />
       ) : (
         <Redirect
@@ -40,8 +39,9 @@ class Routes extends React.Component {
     axios.get("/api/authenticate").then(res => {
       if (res.data.status === "EVERYTHING_OK") {
         this.setState({ authenticated: true });
+      } else {
+        this.setState({ authenticated: false });
       }
-      this.setState({ authenticated: false });
     });
   }
 
@@ -54,7 +54,7 @@ class Routes extends React.Component {
           <Route path="/register" component={Register} />
           <PrivateRoute
             path="/dashboard"
-            authenticated={true}
+            authenticated={this.state.authenticated}
             component={App}
           />
         </div>
@@ -65,7 +65,6 @@ class Routes extends React.Component {
 class Menu extends React.Component {
   render() {
     if (this.props.authenticated) {
-      console.log(this.props.authenticated);
       return <Redirect to="/dashboard" />;
     }
     return (

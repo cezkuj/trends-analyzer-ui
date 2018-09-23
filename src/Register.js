@@ -31,6 +31,7 @@ class Register extends React.Component {
         }
       }
     );
+    window.location.reload();
     this.props.history.push("/dashboard");
   }
   render() {
