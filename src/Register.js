@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 
 class Register extends React.Component {
   constructor(props) {
@@ -16,16 +17,21 @@ class Register extends React.Component {
     this.setState({ [event.target.name]: event.target.value }); //Dynamic keys https://stackoverflow.com/questions/29280445/reactjs-setstate-with-a-dynamic-key-name
   }
   handleRegister(event) {
-    /*axios.post('/api/' + event.target.name, {
-        "username": this.state.username,
-        "password": this.state.password,
-      }, {
+    axios.post(
+      "/api/register",
+      {
+        username: this.state.username,
+        password: this.state.password,
+        email: this.state.email,
+        registrationCode: this.state.registration_code
+      },
+      {
         headers: {
-            'Content-Type': 'application/json',
+          "Content-Type": "application/json"
         }
-    })
-    */
-    this.props.history.push("/login");
+      }
+    );
+    this.props.history.push("/dashboard");
   }
   render() {
     return (
@@ -62,7 +68,7 @@ class Register extends React.Component {
           onChange={this.handleChange}
         />
         <br />
-        <button name="register" onClick={this.handleRegister}>
+        <button name="register" type="button" onClick={this.handleRegister}>
           Register
         </button>
       </form>

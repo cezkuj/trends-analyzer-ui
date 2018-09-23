@@ -7,16 +7,17 @@ import {
   withRouter
 } from "react-router-dom";
 
+import axios from "axios";
+
 import App from "./App";
 import Login from "./Login";
 import Register from "./Register";
-import Auth from "./Authenticator";
 
 const PrivateRoute = ({ component: Component, ...rest }) => (
   <Route
     {...rest}
     render={props =>
-      Auth.authenticate() ? (
+      true ? (
         <Component {...props} />
       ) : (
         <Redirect
@@ -31,14 +32,31 @@ const PrivateRoute = ({ component: Component, ...rest }) => (
 );
 
 class Routes extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { authenticated: false };
+  }
+  componentDidMount() {
+    axios.get("/api/authenticate").then(res => {
+      if (res.data.status === "EVERYTHING_OK") {
+        this.setState({ authenticated: true });
+      }
+      this.setState({ authenticated: false });
+    });
+  }
+
   render() {
     return (
       <Router>
         <div>
-          <Menu />
+          <Menu authenticated={this.state.authenticated} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
-          <PrivateRoute path="/dashboard" component={App} />
+          <PrivateRoute
+            path="/dashboard"
+            authenticated={true}
+            component={App}
+          />
         </div>
       </Router>
     );
@@ -46,7 +64,8 @@ class Routes extends React.Component {
 }
 class Menu extends React.Component {
   render() {
-    if (Auth.authenticate()) {
+    if (this.props.authenticated) {
+      console.log(this.props.authenticated);
       return <Redirect to="/dashboard" />;
     }
     return (
@@ -64,4 +83,5 @@ class Menu extends React.Component {
     );
   }
 }
+
 export default Routes;

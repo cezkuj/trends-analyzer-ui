@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 
 class Login extends React.Component {
@@ -12,15 +13,18 @@ class Login extends React.Component {
     this.setState({ [event.target.name]: event.target.value }); //Dynamic keys https://stackoverflow.com/questions/29280445/reactjs-setstate-with-a-dynamic-key-name
   }
   handleLogin(event) {
-    /*axios.post('/api/' + event.target.name, {
-        "username": this.state.username,
-        "password": this.state.password,
-      }, {
+    axios.post(
+      "/api/login",
+      {
+        username: this.state.username,
+        password: this.state.password
+      },
+      {
         headers: {
-            'Content-Type': 'application/json',
+          "Content-Type": "application/json"
         }
-    })
-    */
+      }
+    );
     this.props.history.push("/dashboard");
   }
   render() {
@@ -40,7 +44,7 @@ class Login extends React.Component {
           value={this.state.password}
           onChange={this.handleChange}
         />
-        <button name="login" onClick={this.handleLogin}>
+        <button name="login" type="button" onClick={this.handleLogin}>
           Login
         </button>
         <Link to="/register">Register</Link>
